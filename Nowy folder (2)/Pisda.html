@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Niezależna Telewizja PisDa</title>
+  <style>
+    :root {
+      --main-bg: #001a33;
+      --panel-bg: #003366;
+      --accent: #ff0033;
+      --text-light: #ffffff;
+      --text-muted: #cccccc;
+      --radius: 8px;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--main-bg);
+      color: var(--text-light);
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #000c1a;
+      padding: 20px;
+      text-align: center;
+      border-bottom: 2px solid var(--accent);
+    }
+
+    header img {
+      width: 100px;
+      margin-bottom: 10px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2.2rem;
+      color: var(--accent);
+    }
+
+    main {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: var(--panel-bg);
+      border-radius: var(--radius);
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    input, textarea, button {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+    }
+
+    button {
+      background-color: var(--accent);
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #cc002a;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .article {
+      margin-top: 20px;
+      background-color: #00264d;
+      padding: 20px;
+      border-radius: var(--radius);
+    }
+
+    .article h2 {
+      margin-top: 0;
+      color: var(--accent);
+    }
+
+    .article .meta {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .admin-controls {
+      margin-top: 10px;
+      text-align: right;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="logo.png" alt="Logo PisDa" />
+  <h1>Niezależna Telewizja PisDa</h1>
+</header>
+
+<main>
+  <div id="adminPanel">
+    <h2>🔐 Panel administratora</h2>
+    <input type="password" id="adminPass" placeholder="Hasło administratora" />
+    <button onclick="login()">Zaloguj</button>
+  </div>
+
+  <div id="formPanel" class="hidden">
+    <h2>✍️ Dodaj artykuł</h2>
+    <input type="text" id="title" placeholder="Tytuł artykułu" />
+    <textarea id="content" placeholder="Treść artykułu" rows="6"></textarea>
+    <button onclick="addArticle()">Dodaj artykuł i wygeneruj link</button>
+  </div>
+
+  <div id="articleDisplay"></div>
+</main>
+
+<footer>
+  &copy; 2025 Niezależna Telewizja PisDa
+</footer>
+
+<script>
+  const ADMIN_PASSWORD = "tajnehaslo";
+  let isAdmin = false;
+  let articles = [];
+
+  function login() {
+    const input = document.getElementById('adminPass').value;
+    if (input === ADMIN_PASSWORD) {
+      isAdmin = true;
+      document.getElementById('adminPanel').classList.add('hidden');
+      document.getElementById('formPanel').classList.remove('hidden');
+    } else {
+      alert("Niepoprawne hasło!");
+    }
+  }
+
+  function addArticle() {
+    const title = document.getElementById("title").value.trim();
+    const content = document.getElementById("content").value.trim();
+    if (!title || !content) {
+      alert("Wypełnij tytuł i treść!");
+      return;
+    }
+
+    articles.push({ title, content });
+    updateURL();
+    renderArticles();
+    document.getElementById("title").value = "";
+    document.getElementById("content").value = "";
+  }
+
+  function deleteArticle(index) {
+    if (confirm("Usunąć ten artykuł?")) {
+      articles.splice(index, 1);
+      updateURL();
+      renderArticles();
+    }
+  }
+
+  function renderArticles() {
+    const container = document.getElementById("articleDisplay");
+    container.innerHTML = "";
+    if (articles.length === 0) return;
+
+    articles.forEach((article, i) => {
+      const div = document.createElement("div");
+      div.className = "article";
+      div.innerHTML = `
+        <h2>${article.title}</h2>
+        <div class="meta">Artykuł #${i + 1}</div>
+        <p>${article.content.replace(/\n/g, "<br>")}</p>
+        ${isAdmin ? `<div class="admin-controls"><button onclick="deleteArticle(${i})">🗑 Usuń</button></div>` : ""}
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function updateURL() {
+    const data = encodeURIComponent(JSON.stringify(articles));
+    const url = `${window.location.origin}${window.location.pathname}?articles=${data}`;
+    prompt("Skopiuj ten link i wyślij komu chcesz:", url);
+  }
+
+  // Odczyt z URL
+  const params = new URLSearchParams(window.location.search);
+  if (params.has("articles")) {
+    try {
+      articles = JSON.parse(decodeURIComponent(params.get("articles")));
+      renderArticles();
+    } catch (e) {
+      console.error("Błąd wczytywania artykułów.");
+    }
+  }
+</script>
+
+</body>
+</html>
